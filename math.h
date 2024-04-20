@@ -124,12 +124,12 @@ int in_bounds(int x, int max) {
 
 int vec2i_at(Vec2I vec, int index) {
   switch (index) {
-    case 0:
-      return vec.x;
-    case 1:
-      return vec.y;
-    default:
-      assert(!"Out of bounds");
+  case 0:
+    return vec.x;
+  case 1:
+    return vec.y;
+  default:
+    assert(!"Out of bounds");
   }
 }
 

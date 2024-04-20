@@ -9,12 +9,24 @@
 #define MATH_IMPL
 #include "math.h"
 
+typedef enum {
+  ACT_RELU,
+  ACT_TANH,
+  ACT_SIGMOID,
+  NUM_ACTS,
+} Activation;
+
 typedef struct {
-  enum {
-    ACT_RELU,
-    ACT_TANH,
-  } act;
+  Activation act;
 } NN;
+
+float activation(Activation act, float x) {
+  switch (act) {
+  case ACT_RELU: return max(0, x);
+  case ACT_TANH: return tanh(x);
+  case ACT_SIGMOID: return 1.0 / (1.0 + expf(-x));
+  }
+}
 
 int main() {
   srand(time(0));
