@@ -21,12 +21,14 @@ void *arena_alloc(Arena *al, size_t len);
 do { \
   assert((xs)->cap != 0); \
   (xs)->items = malloc((xs)->cap * sizeof((xs)->items[0])); \
+  (xs)->count = 0; \
 } while (0);
 
 #define da_init_ar(arena, xs) \
-do { \
-  (xs)->items = arena_alloc((arena), (xs)->cap * sizeof((xs)->items[0])); \
-} while (0);
+  do { \
+    (xs)->items = arena_alloc((arena), (xs)->cap * sizeof((xs)->items[0])); \
+    (xs)->count = 0; \
+  } while (0);
 
 #define da_push(xs, x) \
   do { \
@@ -40,15 +42,15 @@ do { \
   } while (0)
 
 #define da_push_ar(arena, xs, x) \
-do { \
-  if ((xs)->count >= (xs)->cap) { \
-    assert((xs)->cap != 0); \
-    (xs)->cap *= 2; \
-    (xs)->items = arena_alloc((arena), (xs)->cap)); \
-  } \
+  do { \
+    if ((xs)->count >= (xs)->cap) { \
+      assert((xs)->cap != 0); \
+      (xs)->cap *= 2; \
+      (xs)->items = arena_alloc((arena), (xs)->cap); \
+    } \
 \
-  (xs)->items[(xs)->count++] = (x); \
-}
+    (xs)->items[(xs)->count++] = (x); \
+  } while (0)
 
 #define da_pop(xs) \
   do { \
