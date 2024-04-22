@@ -17,6 +17,9 @@ typedef enum {
 } Activation;
 
 typedef struct {
+  List(Matrix) ws;
+  List(Matrix) bs;
+  List(int) layer_sizes;
   Activation act;
 } NN;
 
@@ -29,37 +32,77 @@ float activation(Activation act, float x) {
   }
 }
 
+Matrix nn_run(Arena *al, NN *nn, Matrix *in) {
+  assert(nn->ws.items[0].w == in->h);
+  assert(in->w == 1);
+
+  Matrix l = *in;
+
+  for (int i = 0; i < nn->ws.count; i++) {
+    if (i != 0) al->pos -= al->last_alloc_len;
+    l = matrix_multiply(al, &nn->ws.items[i], &l);
+
+    Matrix *b = &nn->bs.items[i];
+    for (int i = 0; i < b->h; i++) {
+      m_at(&l, 0, i) += m_at(b, 0, i);
+      m_at(&l, 0, i) = activation(nn->act, m_at(&l, 0, i));
+    }
+  }
+
+  return l;
+}
+
+void nn_init_rand(Arena *al, NN *nn, float wmin, float wmax, float bmin, float bmax) {
+  nn->ws.cap = 256;
+  da_init_ar(al, &nn->ws);
+
+  nn->bs.cap = 256;
+  da_init_ar(al, &nn->bs);
+
+  for (int i = 1; i < nn->layer_sizes.count; i++) {
+    Matrix w = {
+      .w = nn->layer_sizes.items[i - 1],
+      .h = nn->layer_sizes.items[i],
+    };
+    matrix_init(al, &w);
+    matrix_randomize(&w, wmin, wmax);
+
+    Matrix b = {
+      .w = 1,
+      .h = nn->layer_sizes.items[i - 1],
+    };
+    matrix_init(al, &b);
+    matrix_randomize(&b, bmin, bmax);
+
+    da_push(&nn->ws, w);
+    da_push(&nn->bs, b);
+  }
+}
+
 int main() {
   srand(time(0));
 
   Arena al = { .len = 10000, };
   arena_init(&al);
 
-  Matrix a = { .w = 2, .h = 2, };
-  matrix_init(&al, &a);
+  NN nn = { .act = ACT_RELU, };
 
-  for (int i = 0; i < a.w; i++) {
-    for (int j = 0; j < a.h; j++) {
-      m_at(&a, i, j) = randi(0, 10);
-    }
-  }
+  nn.layer_sizes.cap = 256;
+  da_init_ar(&al, &nn.layer_sizes);
+  da_push_ar(&al, &nn.layer_sizes, 2);
+  da_push_ar(&al, &nn.layer_sizes, 3);
+  da_push_ar(&al, &nn.layer_sizes, 2);
+  da_push_ar(&al, &nn.layer_sizes, 1);
 
-  Matrix b = { .w = 2, .h = 2, };
-  matrix_init(&al, &b);
+  nn_init_rand(&al, &nn, -1.0, 1.0, -1.0, 1.0);
 
-  for (int i = 0; i < b.w; i++) {
-    for (int j = 0; j < b.h; j++) {
-      m_at(&b, i, j) = randi(0, 10);
-    }
-  }
+  Matrix in = { .w = 1, .h = nn.layer_sizes.items[0], };
+  matrix_init(&al, &in);
+  matrix_randomize(&in, 0.0, 1.0);
 
-  Matrix out = matrix_multiply(&al, &a, &b);
+  matrix_print(in);
 
-  matrix_print(&a);
-  printf("\n");
-  matrix_print(&b);
-  printf("\n");
-  matrix_print(&out);
+  matrix_print(nn_run(&al, &nn, &in));
 
   return 0;
 }
