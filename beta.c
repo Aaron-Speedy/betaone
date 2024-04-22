@@ -13,7 +13,7 @@ typedef enum {
   ACT_RELU,
   ACT_TANH,
   ACT_SIGMOID,
-  NUM_ACTS,
+  ACT_
 } Activation;
 
 typedef struct {
@@ -22,9 +22,10 @@ typedef struct {
 
 float activation(Activation act, float x) {
   switch (act) {
-  case ACT_RELU: return max(0, x);
+  case ACT_RELU: return max(0.0, x);
   case ACT_TANH: return tanh(x);
   case ACT_SIGMOID: return 1.0 / (1.0 + expf(-x));
+  default: assert(!"Invalid activation");
   }
 }
 
