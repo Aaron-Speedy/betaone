@@ -18,7 +18,8 @@ typedef struct {
 
 #define m_at(m, i, j) (m)->buf[(i) + (j) * (m)->w]
 void matrix_init(Arena *al, Matrix *m);
-void matrix_print(Matrix *m);
+void matrix_print(Matrix m);
+void matrix_randomize(Matrix *m, float min, float max);
 Matrix kernel_apply(Arena *al, Matrix *in, Matrix *k, int hs, int vs);
 Matrix matrix_multiply(Arena *al, Matrix *a, Matrix *b);
 
@@ -38,12 +39,20 @@ void matrix_init(Arena *al, Matrix *m) {
   memset(m->buf, 0.0, m->w * m->h * sizeof(float));
 }
 
-void matrix_print(Matrix *m) {
-  for (int j = 0; j < m->h; j++) {
-    for (int i = 0; i < m->w; i++) {
-      printf("%.0f ", m_at(m, i, j));
+void matrix_print(Matrix m) {
+  for (int j = 0; j < m.h; j++) {
+    for (int i = 0; i < m.w; i++) {
+      printf("%.3f ", m_at(&m, i, j));
     }
     printf("\n");
+  }
+}
+
+void matrix_randomize(Matrix *m, float min, float max) {
+  for (int i = 0; i < m->w; i++) {
+    for (int j = 0; j < m->h; j++) {
+      m_at(m, i, j) = randf(min, max);
+    }
   }
 }
 
