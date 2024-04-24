@@ -20,8 +20,8 @@ typedef struct {
 void matrix_init(Arena *al, Matrix *m);
 void matrix_print(Matrix m);
 void matrix_randomize(Matrix *m, float min, float max);
-Matrix kernel_apply(Arena *al, Matrix *in, Matrix *k, int hs, int vs);
-Matrix matrix_multiply(Arena *al, Matrix *a, Matrix *b);
+Matrix kernel_apply(Arena *al, Matrix in, Matrix k, int hs, int vs);
+Matrix matrix_multiply(Arena *al, Matrix a, Matrix b);
 
 float randf(float min, float max);
 int randi(int min, int max);
@@ -56,25 +56,25 @@ void matrix_randomize(Matrix *m, float min, float max) {
   }
 }
 
-Matrix kernel_apply(Arena *al, Matrix *in, Matrix *k, int hs, int vs) {
-  assert(k->w % 2);
-  assert(k->h % 2);
+Matrix kernel_apply(Arena *al, Matrix in, Matrix k, int hs, int vs) {
+  assert(k.w % 2);
+  assert(k.h % 2);
 
   Matrix out = {
-    .w = in->w / hs,
-    .h = in->h / vs,
+    .w = in.w / hs,
+    .h = in.h / vs,
   };
   matrix_init(al, &out);
 
-  for (int i = 0; i <= in->w + hs; i += hs) {
-    for (int j = 0; j < in->h + vs; j += vs) {
-      for (int x = 0; x < k->w; x++) {
-        for (int y = 0; y < k->h; y++) {
-          int ox = i + x - k->w/2, 
-              oy = j + y - k->h/2;
-          float v = in_bounds(ox, in->w) && in_bounds(oy, in->h) ?
-                    m_at(in, ox, oy) : 0;
-          m_at(&out, i, j) += v * m_at(k, x, y);
+  for (int i = 0; i < in.w + hs; i += hs) {
+    for (int j = 0; j < in.h + vs; j += vs) {
+      for (int x = 0; x < k.w; x++) {
+        for (int y = 0; y < k.h; y++) {
+          int ox = i + x - k.w/2, 
+              oy = j + y - k.h/2;
+          float v = in_bounds(ox, in.w) && in_bounds(oy, in.h) ?
+                    m_at(&in, ox, oy) : 0;
+          m_at(&out, i, j) += v * m_at(&k, x, y);
         }
       }
     }
@@ -83,16 +83,16 @@ Matrix kernel_apply(Arena *al, Matrix *in, Matrix *k, int hs, int vs) {
   return out;
 }
 
-Matrix matrix_multiply(Arena *al, Matrix *a, Matrix *b) {
-  assert(a->w == b->h);
+Matrix matrix_multiply(Arena *al, Matrix a, Matrix b) {
+  assert(a.w == b.h);
 
-  Matrix out = { .w = b->w, .h = a->h };
+  Matrix out = { .w = b.w, .h = a.h };
   matrix_init(al, &out);
 
   for (int i = 0; i < out.w; i++) {
     for (int j = 0; j < out.h; j++) {
-      for (int k = 0; k < a->h; k++) {
-        m_at(&out, i, j) += m_at(b, i, k) * m_at(a, k, j);
+      for (int k = 0; k < a.h; k++) {
+        m_at(&out, i, j) += m_at(&b, i, k) * m_at(&a, k, j);
       }
     }
   }
